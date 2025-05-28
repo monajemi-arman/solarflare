@@ -1,6 +1,42 @@
 # solarflare
 
-![.NET Build](https://github.com/mubix/solarflare/workflows/.NET%20Build/badge.svg)
+# Optimized SolarFlare for 2025
+SolarWinds monitoring platform (2025) has a special method of using DPAPI to encrypt its `default.dat` file.  
+Decrypting this file allows you to use this slightly **modified version of SolarFlare** to dump SolarWinds credentials.
+
+## Steps to Use the new SolarFlare
+1. Clone this repository
+2. Install required python module:
+```bash
+pip install pycryptodome
+```
+
+3. Grab `default.dat` from `C:\ProgramData\SolarWinds\KeyStorage\CryptoHelper\default.dat` on the SolarWinds machine. Copy it to the project folder.
+
+4. Decrypt using script
+```bash
+python solarwinds_dpapi_decrypt.py default.dat
+
+# Output => default.dat.dec
+```
+
+3. Compile C# project for Windows; On Linux you can compile for Windows like this:
+```bash
+# Mono is required for xbuild / msbuild
+apt install mono-complete
+
+# Change directory to project
+cd solarflare/
+
+# Build
+xbuild SolarFlare.sln
+
+# Executable would be at SolarFlare/bin/Debug/SolarFlare.exe
+cp SolarFlare/bin/Debug/SolarFlare.exe .
+```
+4. Copy the `SolarFlare.exe` along with `default.dat.dec` to your SolarWinds system and run the exe as admin to see the magic.
+
+---
 
 Credential Dumping Tool for SolarWinds Orion
 
