@@ -129,8 +129,6 @@ namespace SolarFlare
 			string randompath = Path.GetRandomFileName();
 			solarcert.Password = randompath.Replace(".", "");
 			System.Security.Cryptography.X509Certificates.X509Store store1 = new X509Store(StoreName.My, StoreLocation.LocalMachine);
-			using (File.Create("C:\\Windows\\Temp\\SolarFlare")) { }
-			;
 			store1.Open(OpenFlags.ReadOnly);
 			solarcert.IsPresent = false;
 			solarcert.Exported = false;
